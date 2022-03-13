@@ -10,10 +10,9 @@ def print_hi(name):
 
 import glob
 import numpy as np
-import pandas as pd
 import json
 import os
-import time
+#import time
 
 def countJsonFiles(root_path):
     json_files = glob.glob(root_path + "/**/*.json", recursive=True)
@@ -74,8 +73,8 @@ def countryNumbers(json_files):
 
 
 if __name__ == "__main__":
-    start_time = time.time()
     root_path = input()
+    #start_time = time.time()
     json_files = glob.glob(root_path + "/**/*.json", recursive=True)
 
     print(np.size(json_files))
@@ -83,4 +82,4 @@ if __name__ == "__main__":
     print()
     print()
     print()
-    print("--- %s seconds ---" % (time.time() - start_time))
+    #print("--- %s seconds ---" % (time.time() - start_time))
