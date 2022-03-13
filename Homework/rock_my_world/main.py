@@ -12,7 +12,7 @@ import glob
 import numpy as np
 import json
 import os
-#import time
+import time
 
 def countJsonFiles(root_path):
     json_files = glob.glob(root_path + "/**/*.json", recursive=True)
@@ -20,6 +20,7 @@ def countJsonFiles(root_path):
 
 def countryNumbers(json_files):
     countries = set()
+    cities={}
     for file in json_files:
         # proveravanje da li je koncert validan
         data = []
@@ -64,22 +65,33 @@ def countryNumbers(json_files):
         else:
             d = 1
 
+
+        #PROVERITI DA LI TREBA .lower da se dodaje ili ne
         c = file[d].replace('-', '_')
         if (c.split("_")[0] == "the"):
             c = c.replace("the_", "", 1)
         countries.add(c)
 
-    return len(countries)
+        t = d+1
+        g = file[t].replace('-', '_')
+        if (g.split("_")[0] == "the"):
+            g = g.replace("the_", "", 1)
+        if g not in cities.keys():
+            cities[g] = len(data)
+        else:
+            cities[g] = cities[g] + len(data)
 
+    town = [x for x in sorted(cities) if cities[x]==max(cities.values())]
+    return len(countries), town[0]
 
 if __name__ == "__main__":
     root_path = input()
-    #start_time = time.time()
+    start_time = time.time()
     json_files = glob.glob(root_path + "/**/*.json", recursive=True)
-
+    nc,city = countryNumbers(json_files)
     print(np.size(json_files))
-    print(countryNumbers(json_files))
+    print(nc)
+    print(city)
     print()
     print()
-    print()
-    #print("--- %s seconds ---" % (time.time() - start_time))
+    print("--- %s seconds ---" % (time.time() - start_time))
