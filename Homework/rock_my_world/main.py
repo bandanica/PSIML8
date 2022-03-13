@@ -10,16 +10,77 @@ def print_hi(name):
 
 import glob
 import numpy as np
+import pandas as pd
+import json
+import os
+import time
 
 def countJsonFiles(root_path):
     json_files = glob.glob(root_path + "/**/*.json", recursive=True)
     return json_files
 
+def countryNumbers(json_files):
+    countries = set()
+    for file in json_files:
+        # proveravanje da li je koncert validan
+        data = []
+        if os.path.getsize(file) == 0:
+            # print('empty')
+            # print(file)
+            continue
+        with open(file) as f:
+            if f.read()[0] == '[':
+                # standard json format
+                f = open(file)
+                data = json.load(f)
+            else:
+                # newline delimiter format
+                f = open(file, "r")
+                data = f.readlines()
+                for i, line in enumerate(data):
+                    data[i] = json.loads(line.replace("\n", ""))
+
+        # print(data)
+        if not data:
+            continue
+
+        # remove concerts without band_name
+        data = [x for x in data if "band_name" in x.keys()]
+        # print(data)
+
+        # rastavljanje putanje
+        file = file.replace(root_path, '').split('\\')
+        # file = file.split('\\')
+
+        # racunanje zemalja sa bar jednim validnim koncertom
+
+        # nalazenje zemlje u putanji
+        # print(file)
+
+        if file[1].split('_')[0].isnumeric() or file[1].split('-')[0].isnumeric():
+            if file[2].split('_')[0].isnumeric() or file[2].split('-')[0].isnumeric():
+                d = 4
+            else:
+                d = 2
+        else:
+            d = 1
+
+        c = file[d].replace('-', '_')
+        if (c.split("_")[0] == "the"):
+            c = c.replace("the_", "", 1)
+        countries.add(c)
+
+    return len(countries)
+
+
 if __name__ == "__main__":
+    start_time = time.time()
     root_path = input()
-    #dataset = root_path.split("/")[-1]
-    print(np.size(countJsonFiles(root_path)))
+    json_files = glob.glob(root_path + "/**/*.json", recursive=True)
+
+    print(np.size(json_files))
+    print(countryNumbers(json_files))
     print()
     print()
     print()
-    print()
+    print("--- %s seconds ---" % (time.time() - start_time))
