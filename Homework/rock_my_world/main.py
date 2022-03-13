@@ -30,6 +30,11 @@ def countryNumbers(json_files):
     prazneVen = {}
     ukupnoVen = {}
     nVen={}
+    brojPosBend={}
+    brojKoncBend = {}
+    prosekBend={}
+
+    mapaPodataka = {}
     for file in json_files:
         # proveravanje da li je koncert validan
         data = []
@@ -55,7 +60,7 @@ def countryNumbers(json_files):
 
         # remove concerts without band_name
         data = [x for x in data if "band_name" in x.keys()]
-
+        mapaPodataka[file] = data
         # print(data)
 
         # rastavljanje putanje
@@ -105,16 +110,17 @@ def countryNumbers(json_files):
                 #if prosek!=0:
                 #    con["attendance"] = prosek
                 #else:
-                    con["attendance"]=-1
-                    if con in att:
-                        if g not in avgCities.keys():
-                            avgCities[g] = 1
-                        else:
-                            avgCities[g] +=1
-                        if venue not in prazneVen.keys():
-                            prazneVen[venue] = 1
-                        else:
-                            prazneVen[venue] +=1
+                con["attendance"]=-1
+
+                if con in att:
+                    if g not in avgCities.keys():
+                        avgCities[g] = 1
+                    else:
+                        avgCities[g] +=1
+                    if venue not in prazneVen.keys():
+                        prazneVen[venue] = 1
+                    else:
+                        prazneVen[venue] +=1
 
         ukupno += sum(x["attendance"] for x in data if x["attendance"]!=-1)
         numKonc+= sum(1 for x in data if x["attendance"]!=-1)
@@ -141,24 +147,48 @@ def countryNumbers(json_files):
                 avgCities[grad]-=prazneVen[v]
                 if avgCities[grad]<0:
                     avgCities[grad] = 0
+    average = ukupno / numKonc
 
     for g in famousCities.keys():
         if g in avgCities.keys():
             #average = famousCities[g]/numConCity[g]
-            average = ukupno/numKonc
+
             famousCities[g]+=average*avgCities[g]
 
+    for key,pod in mapaPodataka.items():
+        x = sum(1 for x in pod if "is_indie" in x.keys() and x["is_indie"]==True)
+        if (x>0):
+            for data in pod:
+                if data["attendance"]==-1:
+                    ven = key.split("\\")
+                    ven = ven[-2] + "\\" + ven[-1]
+                    if ven in ukupnoVen.keys() and nVen[ven]!=0:
+                        data["attendance"] = ukupnoVen[ven]/nVen[ven]
+                    else:
+                        data["attendance"] = average
+                if data["band_name"] not in brojPosBend.keys():
+                    brojPosBend[data["band_name"]]=data["attendance"]
+                    brojKoncBend[data["band_name"]] = 1
+                else:
+                    brojPosBend[data["band_name"]]+=data["attendance"]
+                    brojKoncBend[data["band_name"]]+=1
+
+    #for bendovi in brojPosBend.keys():
+    #    prosekBend[bendovi] = brojPosBend[bendovi]/brojKoncBend[bendovi]
+    prosekBend = {bendovi:brojPosBend[bendovi]/brojKoncBend[bendovi] for bendovi in brojPosBend.keys()}
+
+
     town = {key:value for (key,value) in cities.items() if cities[key]==max(cities.values())}
-    return len(countries), sorted(town)[0], sorted(famousCities, key=famousCities.get, reverse=True)[:3]
+    return len(countries), sorted(town)[0], sorted(famousCities, key=famousCities.get, reverse=True)[:3], sorted(prosekBend, key=prosekBend.get, reverse=True)[:3]
 
 if __name__ == "__main__":
     root_path = input()
     start_time = time.time()
     json_files = glob.glob(root_path + "/**/*.json", recursive=True)
-    nc,city, famCities = countryNumbers(json_files)
+    nc,city, famCities, bendovi = countryNumbers(json_files)
     print(np.size(json_files))
     print(nc)
     print(city)
     print(famCities)
-    print()
+    print(bendovi)
     print("--- %s seconds ---" % (time.time() - start_time))
