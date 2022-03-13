@@ -21,6 +21,15 @@ def countJsonFiles(root_path):
 def countryNumbers(json_files):
     countries = set()
     cities={}
+    famousCities={}
+    avgCities={}
+    numConCity = {}
+    avgA = 0
+    ukupno=0
+    numKonc=0
+    prazneVen = {}
+    ukupnoVen = {}
+    nVen={}
     for file in json_files:
         # proveravanje da li je koncert validan
         data = []
@@ -46,6 +55,7 @@ def countryNumbers(json_files):
 
         # remove concerts without band_name
         data = [x for x in data if "band_name" in x.keys()]
+
         # print(data)
 
         # rastavljanje putanje
@@ -73,25 +83,82 @@ def countryNumbers(json_files):
         countries.add(c)
 
         t = d+1
+
         g = file[t].replace('-', '_')
-        if (g.split("_")[0] == "the"):
-            g = g.replace("the_", "", 1)
+        venue = g + "\\" + file[t + 1]
         if g not in cities.keys():
             cities[g] = len(data)
         else:
             cities[g] = cities[g] + len(data)
 
+        att = [x for x in data if "is_indie" in x.keys() and x["is_indie"]==True]
+
+        #AKO NEMA BROJA ATTENDANCE, STAVLJA SE PROSEK ZA TAJ VENUE, AKO NEMA DRUGIH KONCERATA,
+        #STAVLJA SE PROSEK ZA TAJ GRAD CEO(SVE VENUE U FOLDERU)
+        #prosek = sum(x["attendance"] for x in att if "attendance" in x.keys())
+        #if prosek!=0:
+        #    prosek/=sum(1 for x in att if "attendance" in x.keys())
+
+
+        for con in data:
+            if not "attendance" in con.keys():
+                #if prosek!=0:
+                #    con["attendance"] = prosek
+                #else:
+                    con["attendance"]=-1
+                    if con in att:
+                        if g not in avgCities.keys():
+                            avgCities[g] = 1
+                        else:
+                            avgCities[g] +=1
+                        if venue not in prazneVen.keys():
+                            prazneVen[venue] = 1
+                        else:
+                            prazneVen[venue] +=1
+
+        ukupno += sum(x["attendance"] for x in data if x["attendance"]!=-1)
+        numKonc+= sum(1 for x in data if x["attendance"]!=-1)
+        if g not in famousCities.keys():
+            famousCities[g] = sum(x["attendance"] for x in att if x["attendance"]!=-1)
+            numConCity[g] = sum(1 for x in att if x["attendance"]!=-1)
+
+        else:
+            famousCities[g] = famousCities[g] + sum(x["attendance"] for x in att if x["attendance"]!=-1)
+            numConCity[g] += sum(1 for x in att if x["attendance"]!=-1)
+        if venue not in nVen.keys():
+            nVen[venue] = sum(1 for x in data if x["attendance"]!=-1)
+            ukupnoVen[venue] = sum(x["attendance"] for x in data if x["attendance"]!=-1)
+        else:
+            nVen[venue] += sum(1 for x in data if x["attendance"] != -1)
+            ukupnoVen[venue] += sum(x["attendance"] for x in data if x["attendance"] != -1)
+
+    for v in ukupnoVen.keys():
+        if v in prazneVen.keys():
+            if nVen[v]!=0:
+                aver = ukupnoVen[v]/nVen[v]
+                grad = v.split("\\")[0]
+                famousCities[grad]+=prazneVen[v]*aver
+                avgCities[grad]-=prazneVen[v]
+                if avgCities[grad]<0:
+                    avgCities[grad] = 0
+
+    for g in famousCities.keys():
+        if g in avgCities.keys():
+            #average = famousCities[g]/numConCity[g]
+            average = ukupno/numKonc
+            famousCities[g]+=average*avgCities[g]
+
     town = {key:value for (key,value) in cities.items() if cities[key]==max(cities.values())}
-    return len(countries), sorted(town)[0]
+    return len(countries), sorted(town)[0], sorted(famousCities, key=famousCities.get, reverse=True)[:3]
 
 if __name__ == "__main__":
     root_path = input()
     start_time = time.time()
     json_files = glob.glob(root_path + "/**/*.json", recursive=True)
-    nc,city = countryNumbers(json_files)
+    nc,city, famCities = countryNumbers(json_files)
     print(np.size(json_files))
     print(nc)
     print(city)
-    print()
+    print(famCities)
     print()
     print("--- %s seconds ---" % (time.time() - start_time))
