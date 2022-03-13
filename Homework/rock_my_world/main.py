@@ -81,8 +81,8 @@ def countryNumbers(json_files):
         else:
             cities[g] = cities[g] + len(data)
 
-    town = [x for x in sorted(cities) if cities[x]==max(cities.values())]
-    return len(countries), town[0]
+    town = {key:value for (key,value) in cities.items() if cities[key]==max(cities.values())}
+    return len(countries), sorted(town)[0]
 
 if __name__ == "__main__":
     root_path = input()
