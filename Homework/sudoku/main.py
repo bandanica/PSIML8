@@ -65,6 +65,7 @@ def main():
 
     razlike = {}
     rotacija = -1
+    b=0
     for x in range(9):
         for y in range(9):
             startX = x1 + x * kvadrp + x * i + (x >= 3) * i + (x >= 6) * i
@@ -87,6 +88,8 @@ def main():
                 #Image.fromarray(p).show()
                 if (kropuj > 0):
                     p = np.array(Image.fromarray(p).crop((kropuj, kropuj, kvadr - kropuj, kvadr - kropuj)))
+                    #Image.fromarray(p).show()
+                    #return
                     cnove = {}
                     for j in cifre.keys():
                         cnove[j] = np.copy(cifre[j])
@@ -103,17 +106,27 @@ def main():
                 #     Image.fromarray(p).show()
                 #     return
                 for j in cnove.keys():
-                    if rotacija == -1:
+                    if rotacija == -1 and j!=6 and j!=9:
+
                         r1 = max(np.sum(np.abs(p - cnove[j])), np.sum(np.abs(cnove[j] - p)))
                         k = Image.fromarray(cnove[j])
+
                         r2 = max(np.sum(np.abs(p - np.array(k.rotate(90)))), np.sum(np.abs(np.array(k.rotate(90)) - p)))
                         r3 = max(np.sum(np.abs(p - np.array(k.rotate(180)))),
                                  np.sum(np.abs(np.array(k.rotate(180)) - p)))
                         r4 = max(np.sum(np.abs(p - np.array(k.rotate(270)))),
                                  np.sum(np.abs(np.array(k.rotate(270)) - p)))
                         niz = [r1, r2, r3, r4]
-                        if (min(niz)) < (255 * (kvadr - 2 * kropuj) * (kvadr - 2 * kropuj) * 0.3):
-
+                        if (min(niz)) < (255 * np.shape(p)[0] * np.shape(p)[1] * 0.01):
+                            # print(255*0.01*np.shape(p)[0]*np.shape(p)[1])
+                            # #print(np.shape(p))
+                            # #print("usao")
+                            # #k.rotate(90).show()
+                            # Image.fromarray(p).show()
+                            # Image.fromarray(p - np.array(k)).show()
+                            # Image.fromarray(np.array(k) - p).show()
+                            # print(niz)
+                            # return
                             if (r1 == min(niz)):
                                 rotacija = 0
                             elif (r2 == min(niz)):
@@ -127,11 +140,13 @@ def main():
                                 rotacija = 270
                                 cnove[j] = np.array(Image.fromarray(cnove[j]).rotate(270))
 
-                    else:
+                    elif rotacija!=-1:
                         cnove[j] = np.array(Image.fromarray(cnove[j]).rotate(rotacija))
                         #print(rotacija)
                         #Image.fromarray(cnove[j]).show()
                         #return
+                    if (x==0 and (y==0 or y==1) and j==9 and rotacija==-1):
+                        b+=1
 
                     if rotacija != -1:
                         if (x, y) not in razlike.keys():
@@ -139,15 +154,75 @@ def main():
                         elif max(np.sum(np.abs(p - cnove[j])), np.sum(np.abs(cnove[j]) - p)) < razlike[(x, y)][0]:
                             razlike[(x, y)] = (max(np.sum(np.abs(p - cnove[j])), np.sum(np.abs(cnove[j]) - p)), j)
 
-                # Image.fromarray(p-cnove[razlike[(x,y)][1]]).show()
-                tabla[x, y] = razlike[(x, y)][1]
-                #tabla[x, y] = kropuj
-            # slicica = Image.fromarray(p)
-            # slicica.show()
-            # if (y==3):
-            #    break
-        # break
 
+                # Image.fromarray(p-cnove[razlike[(x,y)][1]]).show()
+                if rotacija==0:
+                    tabla[x, y] = razlike[(x, y)][1]
+                elif rotacija==180:
+                    tabla[8-x,8-y] = razlike[(x,y)][1]
+                elif rotacija==270:
+                    tabla[8-y,x] =razlike[(x,y)][1]
+                elif rotacija==90:
+                    tabla[y,8-x] = razlike[(x,y)][1]
+                #else:
+                #    tabla[y,8-y] = razlike[(x,y)][1]
+
+    for sestdevet in range(b):
+        startX = x1
+        stopX = x1 + kvadrp
+        startY = y1 + sestdevet * kvadrp + sestdevet * i + (sestdevet >= 3) * i + (sestdevet >= 6) * i
+        stopY = y1 + sestdevet * kvadrp + sestdevet * i + (sestdevet >= 3) * i + (sestdevet >= 6) * i + kvadrp
+        p = pikseli[np.arange(startX, stopX), :][:, np.arange(startY, stopY)]
+        p[p >= 125] = 255
+        p[p < 125] = 0
+
+        kropuj = np.array(np.where(p == 0))
+        # pocetni i krajnji pikseli u okviru kojih je tabla sudokua
+        kropuj = min(kropuj[:, 0][0], min(kropuj[1, :]))
+        # Image.fromarray(p).show()
+        if (kropuj > 0):
+            p = np.array(Image.fromarray(p).crop((kropuj, kropuj, kvadr - kropuj, kvadr - kropuj)))
+            # Image.fromarray(p).show()
+            # return
+            cnove = {}
+            for j in cifre.keys():
+                cnove[j] = np.copy(cifre[j])
+                cnove[j] = np.array(Image.fromarray(cnove[j]).resize((kvadr - 2 * kropuj, kvadr - 2 * kropuj)))
+                cnove[j][cnove[j] >= 125] = 255
+                cnove[j][cnove[j] < 125] = 0
+                # cnove[j].resize((kvadr-2*kropuj, kvadr-2*kropuj))
+        else:
+            cnove = cifre
+
+        p=~p
+        #Image.fromarray(p).show()
+        for j in range(6,10,3):
+
+            # cnove[j]=~cnove[j]
+            #Image.fromarray(cnove[j]).rotate(rotacija).show()
+
+            cnove[j] = np.array(Image.fromarray(cnove[j]).rotate(rotacija))
+            #print(max(np.sum(np.abs(p - cnove[j])), np.sum(np.abs(cnove[j]) - p)))
+            #Image.fromarray(cnove[j]-p).show()
+            #Image.fromarray(p-cnove[j]).show()
+            if (0, sestdevet) not in razlike.keys():
+                #print("uslo1")
+                razlike[(0, sestdevet)] = (max(np.sum(np.abs(p - cnove[j])), np.sum(np.abs(cnove[j]) - p)), j)
+
+            elif max(np.sum(np.abs(p - cnove[j])), np.sum(np.abs(cnove[j]) - p)) < razlike[(0, sestdevet)][0]:
+                #print("uslo2")
+                razlike[(0, sestdevet)] = (max(np.sum(np.abs(p - cnove[j])), np.sum(np.abs(cnove[j]) - p)), j)
+        if rotacija == 0:
+            tabla[0, sestdevet] = razlike[(0, sestdevet)][1]
+        elif rotacija == 180:
+            tabla[8 - 0, 8 - sestdevet] = razlike[(0, sestdevet)][1]
+        elif rotacija == 270:
+            tabla[8 - sestdevet, 0] = razlike[(0, sestdevet)][1]
+        elif rotacija == 90:
+            tabla[sestdevet, 8 - 0] = razlike[(0, sestdevet)][1]
+
+    #print(rotacija)
+    #print(tabla)
     for row in tabla:
         print (",".join([str(int(x)) for x in row]))
     #for row in tabla:
