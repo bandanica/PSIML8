@@ -16,6 +16,28 @@ import glob
 import time
 
 # See PyCharm help at https://www.jetbrains.com/help/pycharm/
+def moze(tabela, row, col, val):
+    for j in range(0, 9):
+        if tabela[row][j] == val:
+            return False
+
+    for i in range(0, 9):
+        if tabela[i][col] == val:
+            return False
+
+    startRow = (row // 3) * 3
+    startCol = (col // 3) * 3
+    for i in range(0, 3):
+        for j in range(0, 3):
+            if tabela[startRow+i][startCol+j] == val:
+                return False
+
+    return True
+
+def ispisResenog(tabela):
+   for row in tabela:
+       print(",".join([str(int(x)) for x in row]))
+
 def main():
     dir_path = input()
     start_time=time.time()
@@ -223,8 +245,28 @@ def main():
 
     #print(rotacija)
     #print(tabla)
+    resavanje=np.copy(tabla)
+    #resavanje sudokua
+    #https://python.plainenglish.io/solve-a-sudoku-puzzle-using-backtracking-in-python-8e9eb58e57e6
+    def resi():
+        for i in range(0, 9):
+            for j in range(0, 9):
+                if resavanje[i][j] == 0:
+                    for val in range(1, 10):
+                        if moze(resavanje, i, j, val):
+                            resavanje[i][j] = val
+                            resi()
+
+                            resavanje[i][j] = 0
+                    return
+
+        ispisResenog(resavanje)
+
+
+
     for row in tabla:
         print (",".join([str(int(x)) for x in row]))
+    resi()
     #for row in tabla:
     #    print(",".join([str(int(x)) for x in row]))
 
