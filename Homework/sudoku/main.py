@@ -13,11 +13,12 @@ from PIL import Image
 from PIL import ImageOps
 import numpy as np
 import glob
-
+import time
 
 # See PyCharm help at https://www.jetbrains.com/help/pycharm/
 def main():
     dir_path = input()
+    start_time=time.time()
     img_path = glob.glob(dir_path + "/*.png", recursive=True)[0]
     digits_path = glob.glob(dir_path + "\\digits/*.png", recursive=True)
 
@@ -78,11 +79,11 @@ def main():
                 razlike[(x, y)] = (0, 0)
 
             else:
-                vert = p[:, int(kvadr / 2) - 1]
+                #vert = p[:, int(kvadr / 2) - 1]
+                #hort = p[int(kvadr / 2) - 1, :]
                 kropuj = np.array(np.where(p == 0))
                 # pocetni i krajnji pikseli u okviru kojih je tabla sudokua
-                kropuj = kropuj[:, 0][0]
-                # print(kropuj)
+                kropuj = min(kropuj[:, 0][0],min(kropuj[1,:]))
                 #Image.fromarray(p).show()
                 if (kropuj > 0):
                     p = np.array(Image.fromarray(p).crop((kropuj, kropuj, kvadr - kropuj, kvadr - kropuj)))
@@ -95,30 +96,16 @@ def main():
                         # cnove[j].resize((kvadr-2*kropuj, kvadr-2*kropuj))
                 else:
                     cnove = cifre
+                #Image.fromarray(p).show()
+
                 p = ~p
                 # if (x >= 3 and x <= 5):
                 #     Image.fromarray(p).show()
                 #     return
                 for j in cnove.keys():
-                    # if x == 3 and y == 6:
-                    #     if j == 6:
-                    #         print(max(np.sum(np.abs(p - cnove[j])), np.sum(np.abs(cnove[j] - p))))
-                    #         Image.fromarray(cnove[j]).show()
-                    #         Image.fromarray(cnove[j] - p).show()
-                    #         Image.fromarray(p).show()
-                    #         Image.fromarray(p - cnove[j]).show()
-                    #         input("Dalje")
-                    #     if j == 8:
-                    #         print(max(np.sum(np.abs(p - cnove[j])), np.sum(np.abs(cnove[j] - p))))
-                    #         # Image.fromarray(cnove[j]).show()
-                    #         # Image.fromarray(cnove[j]-p).show()
-                    #         # Image.fromarray(p).show()
-                    #         # Image.fromarray(p-cnove[j]).show()
-                    #         return
                     if rotacija == -1:
                         r1 = max(np.sum(np.abs(p - cnove[j])), np.sum(np.abs(cnove[j] - p)))
                         k = Image.fromarray(cnove[j])
-
                         r2 = max(np.sum(np.abs(p - np.array(k.rotate(90)))), np.sum(np.abs(np.array(k.rotate(90)) - p)))
                         r3 = max(np.sum(np.abs(p - np.array(k.rotate(180)))),
                                  np.sum(np.abs(np.array(k.rotate(180)) - p)))
@@ -130,15 +117,15 @@ def main():
                             if (r1 == min(niz)):
                                 rotacija = 0
                             elif (r2 == min(niz)):
-                                rotacija = 270
-                                cnove[j] = np.array(Image.fromarray(cnove[j]).rotate(270))
+                                rotacija = 90
+                                cnove[j] = np.array(Image.fromarray(cnove[j]).rotate(90))
 
                             elif (r3 == min(niz)):
                                 rotacija = 180
                                 cnove[j] = np.array(Image.fromarray(cnove[j]).rotate(180))
                             else:
-                                rotacija = 90
-                                cnove[j] = np.array(Image.fromarray(cnove[j]).rotate(90))
+                                rotacija = 270
+                                cnove[j] = np.array(Image.fromarray(cnove[j]).rotate(270))
 
                     else:
                         cnove[j] = np.array(Image.fromarray(cnove[j]).rotate(rotacija))
@@ -160,8 +147,13 @@ def main():
             # if (y==3):
             #    break
         # break
-    print(tabla)
 
+    for row in tabla:
+        print (",".join([str(int(x)) for x in row]))
+    #for row in tabla:
+    #    print(",".join([str(int(x)) for x in row]))
+
+    print("--- %s seconds ---" % (time.time() - start_time))
     img.close()
 
 
