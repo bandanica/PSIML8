@@ -70,6 +70,7 @@ def countryNumbers(json_files):
         # print(data)
         ukupno += sum(x["attendance"] for x in data if x["attendance"] != -1)
         numKonc += sum(1 for x in data if x["attendance"] != -1)
+        #numKonc += sum(1 for x in data)
         # rastavljanje putanje
         file = file.replace(root_path, '').split('\\')
         # file = file.split('\\')
@@ -97,21 +98,29 @@ def countryNumbers(json_files):
         t = d+1
 
         g = file[t].replace('-', '_')
-        venue = g + "\\" + file[t + 1]
+        venue = c + "\\" + g + "\\" + file[t + 1]
         if g not in cities.keys():
             cities[g] = len(data)
         else:
             cities[g] = cities[g] + len(data)
 
 
+
         if venue not in nVen.keys():
+            #nVen[venue] = sum(1 for x in data)
             nVen[venue] = sum(1 for x in data if x["attendance"]!=-1)
             ukupnoVen[venue] = sum(x["attendance"] for x in data if x["attendance"]!=-1)
         else:
+            #nVen[venue] = sum(1 for x in data)
             nVen[venue] += sum(1 for x in data if x["attendance"] != -1)
             ukupnoVen[venue] += sum(x["attendance"] for x in data if x["attendance"] != -1)
+        # for con in data:
+        #     if con["attendance"] == -1 and sum(1 for x in data if x["attendance"] != -1) != 0:
+        #         nVen1 = sum(1 for x in data if x["attendance"] != -1)
+        #         ukupnoVen1 = sum(x["attendance"] for x in data if x["attendance"] != -1)
+        #         con["attendance"] = ukupnoVen1 / nVen1
 
-    average = math.floor(ukupno/numKonc)
+    average = ukupno/numKonc
     for key,pod in mapaPodataka.items():
 
         file = key.replace(root_path, '').split('\\')
@@ -122,13 +131,17 @@ def countryNumbers(json_files):
                 d = 2
         else:
             d = 1
+        c = file[d].replace('-', '_')
+        if (c.split("_")[0] == "the"):
+            c = c.replace("the_", "", 1)
+
         t = d + 1
         g = file[t].replace('-', '_')
-        ven = g + "\\" + file[t + 1]
+        ven = c + "\\" + g + "\\" + file[t + 1]
         for data in pod:
             if data["attendance"] == -1:
                 if ven in ukupnoVen.keys() and nVen[ven] != 0:
-                    data["attendance"] = math.floor(ukupnoVen[ven] / nVen[ven])
+                    data["attendance"] = ukupnoVen[ven] / nVen[ven]
                 else:
                     data["attendance"] = average
 
@@ -153,9 +166,9 @@ def countryNumbers(json_files):
     prosekBend = {bendovi:math.floor(brojPosBend[bendovi]/brojKoncBend[bendovi]) for bendovi in brojPosBend.keys()}
 
     bendici={}
-    sortirani = sorted(famousCities, key=famousCities.get, reverse=True)
+    sortirani = sorted(prosekBend, key=prosekBend.get, reverse=True)
     for w in sortirani:
-        bendici[w] = famousCities[w]
+        bendici[w] = prosekBend[w]
     print(bendici)
 
     town = {key:value for (key,value) in cities.items() if cities[key]==max(cities.values())}
@@ -169,6 +182,6 @@ if __name__ == "__main__":
     print(np.size(json_files))
     print(nc)
     print(city)
-    print(famCities)
-    print(bendovi)
+    print(",".join(d for d in famCities))
+    print(",".join(d for d in bendovi))
     print("--- %s seconds ---" % (time.time() - start_time))
